@@ -3,13 +3,14 @@ api:
   base_url: "https://api.groq.com/openai/v1"   # toute API compatible OpenAI fonctionne
   api_key_env: "GROQ_API_KEY"
   stt_model: "whisper-large-v3-turbo"          # à vérifier sur console.groq.com/docs/models
-  llm_model: "llama-3.3-70b-versatile"         # idem
+  llm_model: "openai/gpt-oss-20b"              # rapide et très économique ; alternative : "openai/gpt-oss-120b"
 language: "fr"
 
 llm:
   max_history_messages: 12   # mémoire de la conversation (en messages)
   temperature: 0.6
-  max_tokens: 250            # réponses courtes = plus rapides à dire
+  max_tokens: 1000           # marge large : sur les modèles gpt-oss, la "réflexion" interne compte dans cette limite
+  reasoning_effort: "low"    # low = réponses plus rapides (latence) ; null pour les modèles non-raisonnement
   system_prompt: |
     Tu es un petit robot de compagnie qui discute à voix haute avec son propriétaire.
     Réponds en français, en 1 à 3 phrases courtes et naturelles.
