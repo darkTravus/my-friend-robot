@@ -1,0 +1,28 @@
+# Tous les réglages sont ici : on change de fournisseur sans toucher au code.
+api:
+  base_url: "https://api.groq.com/openai/v1"   # toute API compatible OpenAI fonctionne
+  api_key_env: "GROQ_API_KEY"
+  stt_model: "whisper-large-v3-turbo"          # à vérifier sur console.groq.com/docs/models
+  llm_model: "llama-3.3-70b-versatile"         # idem
+language: "fr"
+
+llm:
+  max_history_messages: 12   # mémoire de la conversation (en messages)
+  temperature: 0.6
+  max_tokens: 250            # réponses courtes = plus rapides à dire
+  system_prompt: |
+    Tu es un petit robot de compagnie qui discute à voix haute avec son propriétaire.
+    Réponds en français, en 1 à 3 phrases courtes et naturelles.
+    N'utilise jamais de markdown, de listes, d'émojis ni de symboles : ta réponse sera lue par une synthèse vocale.
+    Si tu ne connais pas une information récente (actualités, météo), dis-le honnêtement.
+
+audio:
+  sample_rate: 16000
+  silence_threshold: 0.012   # à ajuster selon ton micro (voir README)
+  silence_duration: 1.0      # secondes de silence pour considérer la phrase finie
+  max_record_seconds: 15
+  input_device: null         # null = micro par défaut ; sinon numéro affiché par --devices
+  output_device: null
+
+tts:
+  piper_model: "voices/fr_FR-siwis-medium.onnx"
