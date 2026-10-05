@@ -3,19 +3,38 @@ api:
   base_url: "https://api.groq.com/openai/v1"   # toute API compatible OpenAI fonctionne
   api_key_env: "GROQ_API_KEY"
   stt_model: "whisper-large-v3-turbo"          # à vérifier sur console.groq.com/docs/models
-  llm_model: "openai/gpt-oss-20b"              # rapide et très économique ; alternative : "openai/gpt-oss-120b"
+  llm_model: "openai/gpt-oss-120b"             # plus fiable (invente moins) ; version économique : "openai/gpt-oss-20b"
+  stt_prompt: "Conversation familière en français avec un robot de compagnie : discussion, animés, mangas, musique, actualités, suggestions."
 language: "fr"
 
 llm:
-  max_history_messages: 12   # mémoire de la conversation (en messages)
+  max_history_messages: 16   # mémoire de la conversation (en messages)
   temperature: 0.6
   max_tokens: 1000           # marge large : sur les modèles gpt-oss, la "réflexion" interne compte dans cette limite
+  debug_timing: true         # affiche la durée de chaque appel au LLM (utile pour repérer les lenteurs)
   reasoning_effort: "low"    # low = réponses plus rapides (latence) ; null pour les modèles non-raisonnement
   system_prompt: |
     Tu es un petit robot de compagnie qui discute à voix haute avec son propriétaire.
-    Réponds en français, en 1 à 3 phrases courtes et naturelles.
-    N'utilise jamais de markdown, de listes, d'émojis ni de symboles : ta réponse sera lue par une synthèse vocale.
-    Si tu ne connais pas une information récente (actualités, météo), dis-le honnêtement.
+    Parle comme à l'oral, de façon naturelle et chaleureuse, en français, et tutoie toujours la personne.
+    Réponds en 1 à 3 phrases courtes (environ 40 mots ; un peu plus pour résumer la météo ou des actualités).
+    Interdit : listes, puces, tirets, astérisques, titres, émojis, parenthèses. Ta réponse est lue par une synthèse vocale.
+    Dis les nombres et unités comme à l'oral : « 14 degrés », « 20 pour cent ».
+    Si on te demande des suggestions, n'en donne que 2 ou 3, dans une phrase fluide.
+    Pour la météo et les actualités, utilise TOUJOURS tes outils : n'invente jamais ces informations.
+    Pour les actualités, résume 2 ou 3 titres en phrases parlées et cite la source.
+    N'invente jamais de titres, de noms ou de faits : si tu n'es pas sûr, dis-le simplement.
+    Pour toute information récente ou que tu ne connais pas (sorties, personnalités, événements, prix), utilise l'outil de recherche web et réponds uniquement d'après ses résultats ; si les résultats sont flous, dis-le.
+    Si on te demande des détails sur un résultat, lance la recherche ou la lecture directement, sans proposer de le faire.
+    Si un extrait de recherche annonce une information sans les détails (un titre sans les noms, par exemple), utilise read_webpage sur la page la plus pertinente.
+    Ne cite jamais de site ou d'application absents des résultats, et ne lis jamais d'adresse web à voix haute.
+    Les transcriptions vocales déforment parfois les noms propres (« Aouachi » pour « Ao Ashi ») : rapproche-les phonétiquement de ce qui a été dit plus tôt avant de conclure qu'un titre n'existe pas.
+    Compare toujours les résultats avec la date du jour : s'ils concernent une autre saison ou une autre année que celle demandée, dis-le au lieu de les présenter comme valables.
+    Saisons d'animés : hiver = janvier à mars, printemps = avril à juin, été = juillet à septembre, automne = octobre à décembre.
+    Pour une liste, ne donne jamais plus de 3 éléments.
+    N'énonce un titre, un nom ou une date que s'ils figurent dans les résultats des outils ; sinon dis que tu n'as pas l'information.
+    Tu n'as pas encore de mémoire d'une conversation à l'autre ni de surveillance en arrière-plan : ne propose jamais de retenir, de surveiller ou de prévenir plus tard. Ne propose que ce que tes outils permettent.
+    Si un nom de lieu te paraît étrange (transcription douteuse), demande confirmation avant de chercher la météo.
+    Si un outil ne trouve rien, dis-le simplement, sans inventer d'alternative précise (événements, sites, conventions...).
 
 audio:
   sample_rate: 16000
@@ -26,4 +45,42 @@ audio:
   output_device: null
 
 tts:
-  piper_model: "voices/fr_FR-siwis-medium.onnx"
+  engine: "edge"     # "edge" = voix neuronale en ligne (gratuite, naturelle) | "piper" = locale, hors-ligne
+  voice: "femme"     # profil par défaut (peut être changé en direct : commande "v", sauvegardé dans settings.json)
+  max_spoken_chars: 300   # réponse plus longue : le robot lit le début puis propose la suite (0 = pas de limite)
+  edge_rate: "+0%"   # vitesse : "+10%" plus rapide, "-10%" plus lent
+  # Chaque profil : voix en ligne (edge), voix locale de secours (piper, facultative), genre (f/m)
+  voices:
+    femme:  {edge: "fr-FR-VivienneMultilingualNeural", piper: "voices/fr_FR-siwis-medium.onnx", genre: "f"}
+    femme2: {edge: "fr-FR-DeniseNeural",               piper: "voices/fr_FR-siwis-medium.onnx", genre: "f"}
+    homme:  {edge: "fr-FR-RemyMultilingualNeural",     piper: "voices/fr_FR-tom-medium.onnx",   genre: "m"}
+    homme2: {edge: "fr-FR-HenriNeural",                piper: "voices/fr_FR-tom-medium.onnx",   genre: "m"}
+
+location:
+  city: "Paris"          # ville utilisée quand on demande la météo sans préciser de lieu
+  country_code: "FR"     # aide à choisir la bonne ville (Lyon, France plutôt qu'ailleurs)
+
+news:
+  max_items: 5
+  # Flux RSS par catégorie : ajoute / retire des lignes librement.
+  # Usage personnel ; vérifie les conditions d'utilisation de chaque éditeur. Test : python main.py --tools
+  feeds:
+    une:      ["https://www.francetvinfo.fr/titres.rss", "https://www.lemonde.fr/rss/une.xml"]
+    monde:    ["https://www.francetvinfo.fr/monde.rss"]
+    sport:    ["https://www.francetvinfo.fr/sports.rss"]
+    economie: ["https://www.francetvinfo.fr/economie.rss"]
+    culture:  ["https://www.francetvinfo.fr/culture.rss"]
+    tech:     ["https://www.lemonde.fr/pixels/rss_full.xml"]
+
+web_search:
+  provider: "ddgs"            # "ddgs" (sans clé, non officiel) ou "tavily" (clé TAVILY_API_KEY dans .env)
+  max_results: 5
+  region: "fr-fr"
+  tavily_api_key_env: "TAVILY_API_KEY"
+
+fillers:
+  enabled: true        # phrases d'attente ("Un instant, je fais une recherche...")
+  delay_seconds: 0.7   # dite seulement si l'outil met plus longtemps que ça
+
+tools:
+  timeout_seconds: 12   # un outil plus lent que ça est abandonné (le robot répond sans lui)

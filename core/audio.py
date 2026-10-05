@@ -1,5 +1,6 @@
 """Enregistrement micro (avec détection de fin de phrase) et lecture audio."""
 import io
+from collections import deque
 import wave
 import numpy as np
 import sounddevice as sd
@@ -18,6 +19,7 @@ class Audio:
         """Écoute jusqu'à la fin d'une phrase. Retourne un WAV (bytes) ou None si rien n'a été dit."""
         block = int(self.sr * 0.05)  # blocs de 50 ms
         frames, speech_started, silent_blocks = [], False, 0
+        preroll = deque(maxlen=int(0.5 / 0.05))  # on garde 0,5 s avant la détection : évite de couper le début
         max_blocks = int(self.max_seconds / 0.05)
         silence_blocks_needed = int(self.silence_duration / 0.05)
         waiting_blocks_max = int(6 / 0.05)  # abandon si personne ne parle pendant 6 s
@@ -27,16 +29,23 @@ class Audio:
             for i in range(max_blocks):
                 data, _ = stream.read(block)
                 level = float(np.sqrt(np.mean(data ** 2)))  # volume (RMS)
-                if level > self.threshold:
-                    speech_started, silent_blocks = True, 0
-                elif speech_started:
-                    silent_blocks += 1
-                if speech_started:
+                if not speech_started:
+                    if level > self.threshold:
+                        speech_started, silent_blocks = True, 0
+                        frames.extend(preroll)
+                        frames.append(data.copy())
+                    else:
+                        preroll.append(data.copy())
+                        if i > waiting_blocks_max:
+                            return None
+                else:
                     frames.append(data.copy())
-                    if silent_blocks >= silence_blocks_needed:
-                        break
-                elif i > waiting_blocks_max:
-                    return None
+                    if level > self.threshold:
+                        silent_blocks = 0
+                    else:
+                        silent_blocks += 1
+                        if silent_blocks >= silence_blocks_needed:
+                            break
         if not frames:
             return None
         return self._to_wav(np.concatenate(frames))
@@ -57,6 +66,11 @@ class Audio:
             data = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16)
         if ch > 1:
             data = data.reshape(-1, ch)
+        sd.play(data, sr, device=self.out_dev)
+        sd.wait()
+
+    def play_array(self, data, sr):
+        """Lit un tableau int16 mono."""
         sd.play(data, sr, device=self.out_dev)
         sd.wait()
 

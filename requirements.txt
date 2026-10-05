@@ -4,3 +4,7 @@ numpy>=1.24
 python-dotenv>=1.0
 PyYAML>=6.0
 piper-tts>=1.2
+edge-tts>=6.1
+miniaudio>=1.59
+requests>=2.31
+ddgs>=9.0
