@@ -19,6 +19,7 @@ def clean_for_speech(text: str) -> str:
                  "\u00a0": " ", "\u202f": " ", "%": " pour cent", "&": " et ",
                  "€": " euros", "$": " dollars", "*": "", "#": "", "_": " ", "~": ""}.items():
         text = text.replace(a, b)
+    text = re.sub(r"\[[^\]]{1,20}\]", "", text)   # étiquettes d'émotion égarées : jamais lues
     # listes : on retire les puces et on termine chaque ligne par une ponctuation (= une pause)
     lines = []
     for line in text.splitlines():

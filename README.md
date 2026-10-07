@@ -1,6 +1,7 @@
 # Robot conversationnel - Phase 1 (prototype PC)
 
-Chaîne : micro -> STT (Whisper en ligne) -> LLM (API) -> TTS (Piper local) -> haut-parleur.
+Chaîne : micro (écoute permanente) -> mot d'activation -> STT (Whisper en ligne) -> LLM + outils (API) -> TTS -> haut-parleur,
+avec un visage animé (3 barres à l'écoute, yeux quand il parle).
 
 ## Installation
 
@@ -24,6 +25,8 @@ Chaîne : micro -> STT (Whisper en ligne) -> LLM (API) -> TTS (Piper local) -> h
 ## Lancer
 
     python main.py
+
+Puis : dis le mot d'activation, ou appuie sur **Espace** dans la fenêtre / **Entrée** dans la console.
 
 ## Réglages utiles
 
@@ -95,3 +98,48 @@ Tout service compatible OpenAI convient, sans toucher au code.
 ## Lecture de pages web
 
 `read_webpage` lit une page issue d'un résultat de recherche quand l'extrait ne suffit pas. Seules les URL renvoyées par `search_web` sont acceptées.
+
+## Écoute permanente et mot d'activation
+
+1. Installe le détecteur (à part, car il est facultatif) : `pip install -r requirements-wake.txt`
+2. Règle `wake.threshold` avec `python main.py --wake-test` : il affiche le score en direct quand tu dis le mot.
+   Trop de faux réveils : monte le seuil (0.6). Il ne réagit pas : baisse-le (0.4).
+3. Par défaut le mot est **"hey jarvis"** (modèle anglais prêt à l'emploi, pour valider le fonctionnement).
+   Autres modèles prêts : `alexa`, `hey_mycroft`, `hey_rhasspy`. Un mot en français (le nom du robot) demande un modèle
+   personnalisé : voir ROADMAP.md.
+4. Si le détecteur n'est pas installé, le robot passe tout seul en mode manuel (Espace / Entrée).
+
+Déroulé : veille -> mot d'activation -> le robot répond ("Oui ?") -> tu parles -> réponse -> **fenêtre de suite** (6 s pour enchaîner sans
+redire le mot) -> retour en veille. Le micro est ignoré pendant que le robot parle (pas de réveil par sa propre voix).
+
+## Visage
+
+- **Veille** : yeux calmes qui clignent. **Écoute** : 3 barres verticales (graves, médiums, aigus) calculées par FFT sur le
+  vrai son du micro, avec une porte de bruit. **Réflexion** : yeux qui regardent en haut + 3 points. **Parole** : yeux de dessin
+  animé qui rebondissent avec le volume réel de la voix.
+- Réglages dans `config.yaml` (section `ui`). `--no-ui` pour la console seule. Sous Linux : `sudo apt install python3-tk`.
+- Le dessin est fait avec Pillow : le même code servira sur l'écran SPI du robot (phase 3).
+
+## Commandes console
+
+Entrée = réveiller | `v` = liste des voix, `v 3` ou `v homme` = choisir | `r` = nouvelle conversation | `q` = quitter
+
+## Émotions
+
+- Le LLM commence chaque réponse par une étiquette `[joie]`, `[tristesse]`, `[doute]`... jamais lue à voix haute : coût nul en calcul.
+  Si elle manque, une règle locale (mots-clés) devine l'émotion. Émotions : neutre, joie, amusement, surprise, curiosité,
+  tristesse, doute ; plus le sommeil (veille prolongée, `ui.sleep_after_seconds`).
+- Pour ajouter une émotion : une ligne dans `PRESETS` (ui/face.py) et son nom dans `EMOTIONS` (core/dialogue.py).
+
+## Fin de conversation automatique
+
+- Tu dis "merci", "à plus tard", "c'est tout", "bonne nuit"..., ou le LLM juge la discussion close (`[fin]`) : le robot répond
+  puis repasse tout de suite en veille, sans attendre.
+- Le robot vient de poser une question : fenêtre d'écoute plus longue (`follow_up_question_seconds`).
+- Bruit ou télé : les phrases fantômes de Whisper ("Sous-titrage...", "Merci d'avoir regardé...") sont ignorées.
+- Désactivation : `conversation.auto_end: false`.
+
+## Réponse de réveil
+
+`conversation.wake_reply` : `"voice"` (le robot dit "Oui ?", "Je t'écoute"...), `"beep"` ou `"none"`. Les phrases sont
+pré-synthétisées au démarrage : si l'une n'est pas encore prête, le robot retombe sur le bip.

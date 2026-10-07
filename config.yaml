@@ -34,6 +34,9 @@ llm:
     N'énonce un titre, un nom ou une date que s'ils figurent dans les résultats des outils ; sinon dis que tu n'as pas l'information.
     Tu n'as pas encore de mémoire d'une conversation à l'autre ni de surveillance en arrière-plan : ne propose jamais de retenir, de surveiller ou de prévenir plus tard. Ne propose que ce que tes outils permettent.
     Si un nom de lieu te paraît étrange (transcription douteuse), demande confirmation avant de chercher la météo.
+    Commence TOUJOURS ta réponse par une étiquette d'émotion entre crochets, choisie parmi [neutre] [joie] [amusement] [surprise] [curiosité] [tristesse] [doute], selon ce que tu ressens : [tristesse] si la personne est triste, [joie] pour une bonne nouvelle, [doute] si tu n'as rien trouvé, [curiosité] si tu poses une question. L'étiquette n'est jamais lue à voix haute.
+    Si la personne clôt la discussion (merci, au revoir, c'est tout, bonne nuit) et que tu ne poses pas de question, ajoute [fin] juste après l'étiquette, par exemple « [joie][fin] Avec plaisir, à bientôt ! ». Sinon n'écris jamais [fin].
+    Ne termine pas toutes tes réponses par une question ou une proposition d'aide.
     Si un outil ne trouve rien, dis-le simplement, sans inventer d'alternative précise (événements, sites, conventions...).
 
 audio:
@@ -84,3 +87,24 @@ fillers:
 
 tools:
   timeout_seconds: 12   # un outil plus lent que ça est abandonné (le robot répond sans lui)
+
+wake:
+  mode: "openwakeword"        # "manual" = seulement Entrée (console) ou Espace (fenêtre)
+  models: ["hey_jarvis"]      # prêts à l'emploi : hey_jarvis, alexa, hey_mycroft, hey_rhasspy ; ou chemin d'un modèle perso .onnx
+  threshold: 0.5              # plus bas = plus sensible (mais plus de faux réveils) ; test : python main.py --wake-test
+  consecutive_frames: 2       # nombre de détections de suite exigées (anti faux positifs)
+
+conversation:
+  wake_reply: "voice"         # après le mot d'activation : "voice" = le robot répond ("Oui ?"), "beep" = petit bip, "none"
+  wake_replies: ["Oui ?", "Oui, je t'écoute.", "Hum ?", "Oui, dis-moi.", "Je t'écoute."]
+  first_wait_seconds: 6       # temps laissé pour parler après le réveil
+  follow_up_seconds: 6        # après une réponse : on peut enchaîner sans redire le mot d'activation
+  follow_up_question_seconds: 10   # fenêtre plus longue quand le robot vient de poser une question
+  auto_end: true              # fin automatique : "merci", "à plus tard"... ou le LLM juge la discussion terminée
+
+ui:
+  enabled: true               # fenêtre du visage (PC). Sur le robot : écran SPI (phase 3)
+  scale: 2                    # taille de la fenêtre (2 = 640x480) ; l'image est dessinée en 320x240
+  fps: 30
+  sleep_after_seconds: 90     # veille prolongée : le robot s'endort (yeux fermés, z z z)
+  bar_gain: 1.0               # sensibilité des 3 barres d'écoute (monte à 1.5 si elles bougent peu)

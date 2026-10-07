@@ -5,6 +5,8 @@ from datetime import datetime
 
 from openai import OpenAI
 
+from .dialogue import parse_reply
+
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
         "septembre", "octobre", "novembre", "décembre"]
@@ -26,6 +28,8 @@ class Brain:
         self.max_tokens = cfg["max_tokens"]
         self.reasoning_effort = cfg.get("reasoning_effort")
         self.history = []
+        self.emotion = "neutre"      # émotion de la dernière réponse (pour le visage)
+        self.wants_end = False       # le LLM pense que la conversation est terminée
         self.on_slow_tool = None   # fonction(nom_outil) appelée si un outil dépasse tool_delay
         self.tool_delay = 0.7
         self.tool_timeout = 12.0   # au-delà, l'outil est abandonné et le LLM répond sans lui
@@ -80,13 +84,16 @@ class Brain:
                     self.history.append({"role": "tool", "tool_call_id": tc.id, "content": result})
                 continue
 
-            answer = (msg.content or "").strip() or "Désolé, je n'ai pas réussi à formuler une réponse."
-            self.history.append({"role": "assistant", "content": answer})
-            return answer
+            raw = (msg.content or "").strip() or "[doute] Désolé, je n'ai pas réussi à formuler une réponse."
+            return self._finish(raw)
 
-        answer = "Désolé, je n'arrive pas à terminer cette recherche."
-        self.history.append({"role": "assistant", "content": answer})
-        return answer
+        return self._finish("[doute] Désolé, je n'arrive pas à terminer cette recherche.")
+
+    def _finish(self, raw: str) -> str:
+        """Garde l'étiquette dans l'historique (le LLM garde l'habitude), renvoie le texte sans étiquette."""
+        self.history.append({"role": "assistant", "content": raw})
+        text, self.emotion, self.wants_end = parse_reply(raw)
+        return text
 
     def _run_tools(self, calls):
         """Exécute les outils en parallèle. Phrase d'attente si lent, abandon si trop lent."""
@@ -116,7 +123,7 @@ class Brain:
         """Dernière phrase du robot : sert de contexte à la transcription (noms propres)."""
         for m in reversed(self.history):
             if m["role"] == "assistant" and m.get("content"):
-                return m["content"]
+                return parse_reply(m["content"])[0]
         return ""
 
     def set_gender(self, genre: str | None):
