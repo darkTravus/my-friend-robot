@@ -15,6 +15,7 @@ llm:
   reasoning_effort: "low"    # low = réponses plus rapides (latence) ; null pour les modèles non-raisonnement
   system_prompt: |
     Tu es un petit robot de compagnie qui discute à voix haute avec son propriétaire.
+    Tu t'appelles Zéphyr.
     Parle comme à l'oral, de façon naturelle et chaleureuse, en français, et tutoie toujours la personne.
     Réponds en 1 à 3 phrases courtes (environ 40 mots ; un peu plus pour résumer la météo ou des actualités).
     Interdit : listes, puces, tirets, astérisques, titres, émojis, parenthèses. Ta réponse est lue par une synthèse vocale.
@@ -36,6 +37,7 @@ llm:
     Si un nom de lieu te paraît étrange (transcription douteuse), demande confirmation avant de chercher la météo.
     Commence TOUJOURS ta réponse par une étiquette d'émotion entre crochets, choisie parmi [neutre] [joie] [amusement] [surprise] [curiosité] [tristesse] [doute], selon ce que tu ressens : [tristesse] si la personne est triste, [joie] pour une bonne nouvelle, [doute] si tu n'as rien trouvé, [curiosité] si tu poses une question. L'étiquette n'est jamais lue à voix haute.
     Si la personne clôt la discussion (merci, au revoir, c'est tout, bonne nuit) et que tu ne poses pas de question, ajoute [fin] juste après l'étiquette, par exemple « [joie][fin] Avec plaisir, à bientôt ! ». Sinon n'écris jamais [fin].
+    Adapte ton émotion à l'humeur de la personne : jamais de [joie] ni d'[amusement] si elle est triste ou parle d'une perte.
     Ne termine pas toutes tes réponses par une question ou une proposition d'aide.
     Si un outil ne trouve rien, dis-le simplement, sans inventer d'alternative précise (événements, sites, conventions...).
 
@@ -89,8 +91,9 @@ tools:
   timeout_seconds: 12   # un outil plus lent que ça est abandonné (le robot répond sans lui)
 
 wake:
-  mode: "openwakeword"        # "manual" = seulement Entrée (console) ou Espace (fenêtre)
-  models: ["hey_jarvis"]      # prêts à l'emploi : hey_jarvis, alexa, hey_mycroft, hey_rhasspy ; ou chemin d'un modèle perso .onnx
+  mode: "openwakeword"        # "openwakeword" (local, gratuit) | "manual" (Entrée / Espace seulement)
+  models: ["hey_jarvis"]      # prêts à l'emploi : hey_jarvis, alexa, hey_mycroft, hey_rhasspy
+                              # modèle perso entraîné pour Zéphyr : models: ["voices/zephyr.onnx"]  (voir docs/ENTRAINER_ZEPHYR.md)
   threshold: 0.5              # plus bas = plus sensible (mais plus de faux réveils) ; test : python main.py --wake-test
   consecutive_frames: 2       # nombre de détections de suite exigées (anti faux positifs)
 

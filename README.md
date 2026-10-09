@@ -143,3 +143,8 @@ Entrée = réveiller | `v` = liste des voix, `v 3` ou `v homme` = choisir | `r` 
 
 `conversation.wake_reply` : `"voice"` (le robot dit "Oui ?", "Je t'écoute"...), `"beep"` ou `"none"`. Les phrases sont
 pré-synthétisées au démarrage : si l'une n'est pas encore prête, le robot retombe sur le bip.
+
+## Mot d'activation "Zéphyr"
+
+Porcupine n'est pas utilisable avec un compte particulier. Voie retenue : entraîner un modèle openWakeWord gratuit.
+Guide pas à pas : `docs/ENTRAINER_ZEPHYR.md`. En attendant, "hey jarvis" fait office de mot de test, ou Espace / Entrée.

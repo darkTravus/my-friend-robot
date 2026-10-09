@@ -3,6 +3,7 @@
 Console : Entrée = réveiller | v = voix | r = nouvelle conversation | q = quitter
 Fenêtre : Espace = réveiller | Échap = quitter"""
 import argparse
+from collections import deque
 import os
 import queue
 import random
@@ -126,6 +127,7 @@ def robot_loop(cfg, audio, stt, brain, tts, filler, detector, events, ui, stop):
             audio.flush()
             acknowledge()
 
+            recent = deque(maxlen=3)     # dernières émotions : évite un sourire après une triste nouvelle
             wait_s = first_wait
             while not stop.is_set():
                 ui.mode = "listening"
@@ -146,6 +148,7 @@ def robot_loop(cfg, audio, stt, brain, tts, filler, detector, events, ui, stop):
                 t2 = time.time()
                 print(f"Robot  : {answer}   [{brain.emotion}{'+fin' if brain.wants_end else ''}]")
 
+                recent.append(brain.emotion)
                 filler.wait()      # laisse finir la phrase d'attente avant de répondre
                 ui.show_emotion(brain.emotion)
                 ui.mode = "speaking"
@@ -161,7 +164,10 @@ def robot_loop(cfg, audio, stt, brain, tts, filler, detector, events, ui, stop):
                                       (brain.wants_end and not asks and len(text.split()) <= 8))
                 if ended:
                     print("[Conversation terminée : retour en veille]")
-                    ui.show_emotion("joie" if brain.emotion == "neutre" else brain.emotion, hold=2.5)
+                    emo = brain.emotion
+                    if emo == "neutre":
+                        emo = "neutre" if "tristesse" in recent else "joie"
+                    ui.show_emotion(emo, hold=2.5)
                     break
                 wait_s = follow_up_q if asks else follow_up   # question posée : on laisse plus de temps
             standby()

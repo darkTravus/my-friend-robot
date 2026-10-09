@@ -21,16 +21,21 @@ Légende : ✅ fait · 🟡 en cours / à valider · ⏳ bloqué (matériel non 
 - [x] ✅ Fenêtre de suite sans redire le mot d'activation
 - [x] ✅ Animation d'écoute : 3 barres (spectre réel du micro)
 - [x] ✅ Animation de parole : yeux de dessin animé (volume réel de la voix)
-- [ ] ⬜ Entraîner un mot d'activation personnalisé avec ce nom (modèle openWakeWord ou Porcupine)
-- [x] 🟡 Émotions : joie, amusement, surprise, curiosité, tristesse, doute, sommeil (étiquette du LLM + règles locales)
-- [x] 🟡 Fin de conversation automatique (merci / au revoir / jugement du LLM), fenêtre plus longue après une question
-- [x] 🟡 Réponse de réveil vocale ("Oui ?") à la place du bip
-- [ ] ⬜ Choisir le nom du robot (voir propositions dans la conversation)
+- [x] ❌ Porcupine : inutilisable (réservé aux entreprises, essai de 7 jours)
+- [ ] ⬜ Entraîner un modèle openWakeWord "Zéphyr" sur Colab gratuit (guide : docs/ENTRAINER_ZEPHYR.md), puis le tester avec --wake-test
+- [ ] ⬜ Plan B si le français passe mal : livekit-wakeword (voix de synthèse multilingues, plus complexe)
+- [x] ✅ Émotions : joie, amusement, surprise, curiosité, tristesse, doute, sommeil (étiquette du LLM + règles locales)
+- [x] ✅ Fin de conversation automatique (merci / au revoir / jugement du LLM), fenêtre plus longue après une question
+- [x] ✅ Réponse de réveil vocale ("Oui ?") à la place du bip
+- [x] ✅ Nom du robot : **Zéphyr**
+- [x] ✅ Test avec de la musique en fond : pas de faux réveil, fin de conversation correcte
 
 ## Phase 2 : Matériel Raspberry Pi ⏳
 - [ ] ⏳ Achat tranche 1 (Pi Zero 2 WH, alim, microSD, micro INMP441, ampli MAX98357A + haut-parleur, plaque + fils)
 - [ ] ⏳ Raspberry Pi OS, SSH, Wi-Fi, installation du projet
 - [ ] ⏳ Câblage micro I2S et ampli, test audio
+- [ ] ⏳ Bouton physique de réveil (GPIO, ~1 €) : filet de sécurité si le mot d'activation est capricieux
+- [ ] ⏳ Mesurer le coût CPU / RAM du mot d'activation openWakeWord sur le Zero 2 W
 - [ ] ⏳ Mesure RAM / CPU / latence avec tout qui tourne
 - [ ] ⏳ Démarrage automatique (systemd)
 
@@ -52,6 +57,12 @@ Légende : ✅ fait · 🟡 en cours / à valider · ⏳ bloqué (matériel non 
 ## Phase 6 : Identification du locuteur ⬜
 - [ ] ⬜ Enregistrer des personnes via l'interface
 - [ ] ⬜ Tests de fiabilité (phrases courtes, bruit)
+- [ ] ⬜ **Profils et souvenirs personnels** (idée du propriétaire) : retenir ce qu'une personne confie, par personne
+  - Règles : jamais évoquer un souvenir personnel si la personne n'est pas identifiée avec confiance, ou si plusieurs voix / visages sont présents
+  - Transparence : "qu'est-ce que tu sais sur moi ?", "oublie ça", suppression totale ; liste consultable sur le téléphone
+  - Les souvenirs rappelés repartent chez le fournisseur du LLM dans le prompt : à signaler à l'utilisateur
+  - Informations sensibles : demander une confirmation (téléphone) plutôt que se fier à la seule voix
+  - Dépend de : mémoire entre conversations (Phase 4) + identification du locuteur
 
 ## Phase 7 : Caméra et détection de personnes ⬜ (tranche 3, ~15 €)
 
