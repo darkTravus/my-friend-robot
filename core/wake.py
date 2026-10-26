@@ -14,7 +14,7 @@ class OpenWakeWordDetector:
         import openwakeword
         from openwakeword.model import Model
 
-        names = cfg.get("models") or ["hey_jarvis"]
+        names = cfg.get("models") or ["model/hey_zephyr.onnx"]
         try:
             openwakeword.utils.download_models()   # ne télécharge que ce qui manque (internet requis la 1re fois)
         except Exception:

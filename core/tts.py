@@ -7,6 +7,7 @@ import re
 import threading
 import time
 import unicodedata
+import wave
 
 import numpy as np
 
@@ -34,6 +35,41 @@ def split_sentences(text: str):
     return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
 
 
+def group_sentences(sentences, max_chars: int):
+    """Regroupe les phrases liées sans jamais couper une phrase en plein milieu."""
+    groups, current = [], ""
+    for sentence in sentences:
+        candidate = f"{current} {sentence}".strip() if current else sentence
+        if current and max_chars > 0 and len(candidate) > max_chars:
+            groups.append(current)
+            current = sentence
+        else:
+            current = candidate
+    if current:
+        groups.append(current)
+    return groups
+
+
+def join_audio_segments(segments):
+    """Assemble des segments mono de même fréquence pour l'écoute ou l'export."""
+    if not segments:
+        raise ValueError("Aucun segment audio à assembler.")
+    sample_rates = {int(sr) for _, sr in segments}
+    if len(sample_rates) != 1:
+        raise ValueError("Impossible d'assembler des segments de fréquences différentes.")
+    return np.concatenate([np.asarray(data, dtype=np.int16).reshape(-1)
+                           for data, _ in segments]), sample_rates.pop()
+
+
+def save_wav(path, segments):
+    data, sample_rate = join_audio_segments(segments)
+    with wave.open(os.fspath(path), "wb") as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(sample_rate)
+        output.writeframes(data.tobytes())
+
+
 class TTS:
     """Plusieurs profils de voix (femme, homme...) ; changement possible à tout moment avec set_voice()."""
 
@@ -42,6 +78,7 @@ class TTS:
         self.engine = cfg.get("engine", "edge")
         self.edge_rate = cfg.get("edge_rate", "+0%")
         self.max_chars = int(cfg.get("max_spoken_chars", 0))  # 0 = pas de limite
+        self.max_segment_chars = int(cfg.get("max_segment_chars", 240))
         self.profiles = cfg["voices"]
         self.current = cfg.get("voice") or next(iter(self.profiles))
         if self.current not in self.profiles:
@@ -155,11 +192,10 @@ class TTS:
         return True
 
     # ---- lecture -------------------------------------------------------
-    def speak(self, text: str) -> float:
-        """Lit le texte. Retourne le délai avant le premier son (en secondes)."""
+    def _segments_for_speech(self, text: str):
         sentences = split_sentences(clean_for_speech(text))
         if not sentences:
-            return 0.0
+            return []
         if self.max_chars:  # réponse trop longue pour de l'oral : on lit le début et on propose la suite
             kept, total = [], 0
             for s in sentences:
@@ -169,13 +205,24 @@ class TTS:
                 kept.append(s)
                 total += len(s)
             sentences = kept
+        return group_sentences(sentences, self.max_segment_chars)
+
+    def render(self, text: str):
+        """Synthétise le texte en segments continus, sans les lire."""
+        return [self._synth(segment) for segment in self._segments_for_speech(text)]
+
+    def speak(self, text: str) -> float:
+        """Lit le texte. Retourne le délai avant le premier son (en secondes)."""
+        segments = self._segments_for_speech(text)
+        if not segments:
+            return 0.0
         q = queue.Queue(maxsize=2)
         DONE = object()
 
         def producer():
             try:
-                for s in sentences:
-                    q.put(self._synth(s))
+                for segment in segments:
+                    q.put(self._synth(segment))
             except Exception as e:
                 q.put(e)
             q.put(DONE)

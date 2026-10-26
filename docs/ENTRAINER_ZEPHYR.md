@@ -18,11 +18,11 @@ strictement nécessaires.
 
 4. Exécution > **Tout exécuter**, puis attends. Le notebook télécharge environ 25 Go **dans Colab** (pas sur ton PC).
    La dernière cellule télécharge `zephyr.onnx`.
-5. Place `zephyr.onnx` dans le dossier `voices/` du projet, puis dans `config.yaml` :
+5. Renomme le modèle en `hey_zephyr.onnx` et place-le dans le dossier `model/` du projet. Dans `config.yaml`, configure :
 
        wake:
          mode: "openwakeword"
-         models: ["voices/zephyr.onnx"]
+         models: ["model/hey_zephyr.onnx"]
          threshold: 0.5
 
 6. `python main.py --wake-test` : dis "hey Zéphyr" plusieurs fois (loin, près, doucement, fort), puis laisse la télé ou la

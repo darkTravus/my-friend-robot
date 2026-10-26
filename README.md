@@ -34,6 +34,12 @@ Puis : dis le mot d'activation, ou appuie sur **Espace** dans la fenêtre / **En
 - `python main.py --noise` : mesure le bruit ambiant pour régler `silence_threshold`.
   Trop bas : le robot n'arrête jamais d'écouter. Trop haut : il ne t'entend pas.
 - Les temps STT / LLM / TTS sont affichés : c'est ce qui te dira plus tard si le Pi Zero tiendra.
+- `python main.py --tts-test` : génère, lit et exporte cinq exemples vocaux de référence en WAV dans `tts-test-output`
+  (connexion Internet nécessaire avec Edge TTS).
+  Chaque lancement crée un nouveau dossier daté ; écoute les cinq fichiers dans l'ordre pour évaluer le naturel,
+  l'intonation et les éventuelles coupures. Compare les voix avec `--tts-test-voice homme` ou un autre profil,
+  et change le dossier racine avec `--tts-test-dir chemin`.
+- `python -m unittest discover -s tests -v` : vérifie le découpage et le regroupement des phrases sans accès réseau.
 
 ## Structure
 
@@ -42,7 +48,7 @@ Puis : dis le mot d'activation, ou appuie sur **Espace** dans la fenêtre / **En
     core/audio.py    micro + haut-parleur
     core/stt.py      voix -> texte
     core/llm.py      conversation et mémoire
-    core/tts.py      texte -> voix (Piper)
+    core/tts.py      texte -> voix (Edge TTS ou Piper)
     modules/         (vide) futurs outils : météo, actus, Spotify...
 
 ## Changer de fournisseur
@@ -104,9 +110,8 @@ Tout service compatible OpenAI convient, sans toucher au code.
 1. Installe le détecteur (à part, car il est facultatif) : `pip install -r requirements-wake.txt`
 2. Règle `wake.threshold` avec `python main.py --wake-test` : il affiche le score en direct quand tu dis le mot.
    Trop de faux réveils : monte le seuil (0.6). Il ne réagit pas : baisse-le (0.4).
-3. Par défaut le mot est **"hey jarvis"** (modèle anglais prêt à l'emploi, pour valider le fonctionnement).
-   Autres modèles prêts : `alexa`, `hey_mycroft`, `hey_rhasspy`. Un mot en français (le nom du robot) demande un modèle
-   personnalisé : voir ROADMAP.md.
+3. Le mot d'activation est **"hey Zéphyr"**, avec le modèle personnalisé `model/hey_zephyr.onnx`.
+   Pour régler le seuil ou tester le score du modèle, lance `python main.py --wake-test`.
 4. Si le détecteur n'est pas installé, le robot passe tout seul en mode manuel (Espace / Entrée).
 
 Déroulé : veille -> mot d'activation -> le robot répond ("Oui ?") -> tu parles -> réponse -> **fenêtre de suite** (6 s pour enchaîner sans
@@ -146,5 +151,6 @@ pré-synthétisées au démarrage : si l'une n'est pas encore prête, le robot r
 
 ## Mot d'activation "Zéphyr"
 
-Porcupine n'est pas utilisable avec un compte particulier. Voie retenue : entraîner un modèle openWakeWord gratuit.
-Guide pas à pas : `docs/ENTRAINER_ZEPHYR.md`. En attendant, "hey jarvis" fait office de mot de test, ou Espace / Entrée.
+Porcupine n'est pas utilisable avec un compte particulier. Le modèle personnalisé openWakeWord **"hey Zéphyr"** est installé
+dans `model/hey_zephyr.onnx`. Guide d'entraînement : `docs/ENTRAINER_ZEPHYR.md`. Espace / Entrée restent disponibles en
+mode manuel.

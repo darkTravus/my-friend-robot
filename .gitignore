@@ -3,3 +3,4 @@
 __pycache__/
 voices/*.onnx
 voices/*.json
+tts-test-output/

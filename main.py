@@ -10,6 +10,7 @@ import random
 import sys
 import threading
 import time
+from pathlib import Path
 
 import yaml
 import sounddevice as sd
@@ -22,12 +23,19 @@ from core.dialogue import is_noise_transcript, user_wants_to_end
 from core.filler import Filler
 from core.llm import Brain
 from core.stt import STT
-from core.tts import TTS
+from core.tts import TTS, join_audio_segments, save_wav
 from core.wake import make_detector, wait_for_trigger
 from modules import ToolRegistry, actus
 from ui.state import UIState
 
 HELP = "Commandes : Entrée = réveiller | v = voix | r = nouvelle conversation | q = quitter"
+TTS_TEST_CASES = [
+    ("conversation", "Alors, je vois ce que tu veux dire. On peut prendre le temps d'y réfléchir ensemble."),
+    ("hesitation", "Euh... je ne suis pas tout à fait sûr. Laisse-moi le formuler autrement : je crois que c'est surtout une question de rythme."),
+    ("question", "Tu préfères une réponse courte, ou tu veux que je t'explique un peu plus en détail ?"),
+    ("emotion", "Oh, je suis vraiment désolé que ta journée ait été aussi difficile. Tu veux m'en parler un peu ?"),
+    ("enchainement", "Il y a deux possibilités. La première est plus simple à mettre en place, tandis que la seconde offre davantage de souplesse. À mon avis, on peut commencer par la première."),
+]
 
 
 def load_config(path="config.yaml"):
@@ -184,6 +192,9 @@ def main():
     ap.add_argument("--noise", action="store_true", help="mesure le bruit ambiant (réglage du seuil)")
     ap.add_argument("--tools", action="store_true", help="teste la météo, les flux RSS et la recherche web")
     ap.add_argument("--wake-test", action="store_true", help="affiche le score du mot d'activation en direct")
+    ap.add_argument("--tts-test", action="store_true", help="génère et lit les exemples vocaux de référence")
+    ap.add_argument("--tts-test-voice", help="profil de voix à tester (par défaut : voix sauvegardée)")
+    ap.add_argument("--tts-test-dir", default="tts-test-output", help="dossier racine des WAV de référence")
     ap.add_argument("--no-ui", action="store_true", help="sans fenêtre (mode console seulement)")
     args = ap.parse_args()
 
@@ -223,6 +234,24 @@ def main():
         print("\n--- Recherche web ---\n" + reg.call("search_web", '{"query": "sorties animés saison automne", "recent": false}'))
         print("\n--- État des flux RSS ---")
         actus.check_feeds(cfg)
+        return
+    if args.tts_test:
+        cfg["tts"]["voice"] = settings.load().get("voice", cfg["tts"].get("voice"))
+        tts = TTS(cfg["tts"], audio)
+        if args.tts_test_voice and not tts.set_voice(args.tts_test_voice):
+            sys.exit(f"Voix inconnue : {args.tts_test_voice}. Disponibles : {', '.join(tts.voice_names())}")
+        run_dir = Path(args.tts_test_dir) / f"{time.strftime('%Y%m%d-%H%M%S')}-{tts.current}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Test vocal {tts.engine} — voix : {tts.current}")
+        print(f"Enregistrements WAV : {run_dir.resolve()}")
+        for index, (name, text) in enumerate(TTS_TEST_CASES, 1):
+            print(f"\n[{index}/{len(TTS_TEST_CASES)}] {name} : {text}")
+            segments = tts.render(text)
+            path = run_dir / f"{index:02d}-{name}.wav"
+            save_wav(path, segments)
+            audio.play_array(*join_audio_segments(segments))
+            print(f"Fichier : {path}")
+        print("\nÉcoute les WAV dans l'ordre et note le naturel, les coupures et l'intonation.")
         return
 
     key = os.getenv(cfg["api"]["api_key_env"])

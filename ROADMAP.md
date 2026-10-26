@@ -17,18 +17,25 @@ Légende : ✅ fait · 🟡 en cours / à valider · ⏳ bloqué (matériel non 
 
 ## Phase 1b : Écoute permanente et visage sur PC 🟡 (livré, à tester)
 - [x] ✅ Micro en écoute continue, sans bouton
-- [x] ✅ Mot d'activation local (openWakeWord, "hey jarvis" pour valider) : fonctionne
+- [x] ✅ Mot d'activation local (openWakeWord, modèle personnalisé "hey Zéphyr") : entraîné, exporté et testé
 - [x] ✅ Fenêtre de suite sans redire le mot d'activation
 - [x] ✅ Animation d'écoute : 3 barres (spectre réel du micro)
 - [x] ✅ Animation de parole : yeux de dessin animé (volume réel de la voix)
 - [x] ❌ Porcupine : inutilisable (réservé aux entreprises, essai de 7 jours)
-- [ ] ⬜ Entraîner un modèle openWakeWord "Zéphyr" sur Colab gratuit (guide : docs/ENTRAINER_ZEPHYR.md), puis le tester avec --wake-test
+- [x] ✅ Entraîner, exporter et tester le modèle openWakeWord "Zéphyr" (model/hey_zephyr.onnx)
 - [ ] ⬜ Plan B si le français passe mal : livekit-wakeword (voix de synthèse multilingues, plus complexe)
 - [x] ✅ Émotions : joie, amusement, surprise, curiosité, tristesse, doute, sommeil (étiquette du LLM + règles locales)
 - [x] ✅ Fin de conversation automatique (merci / au revoir / jugement du LLM), fenêtre plus longue après une question
 - [x] ✅ Réponse de réveil vocale ("Oui ?") à la place du bip
 - [x] ✅ Nom du robot : **Zéphyr**
 - [x] ✅ Test avec de la musique en fond : pas de faux réveil, fin de conversation correcte
+
+## Phase 1c : Expression vocale naturelle 🟡
+- [x] ✅ Consignes de dialogue oral : hésitations rares et pertinentes, formulations fluides, pas de didascalies
+- [x] ✅ Regrouper les phrases liées en segments Edge TTS pour limiter les coupures audibles
+- [x] ✅ Tests de référence reproductibles en ligne de commande avec export WAV
+- [ ] 🟡 Écouter les exemples sur les voix utilisées et ajuster le rythme / la taille des segments
+- [ ] ⬜ Étudier plus tard l'ajout contrôlé de respirations, soupirs et autres effets sonores
 
 ## Phase 2 : Matériel Raspberry Pi ⏳
 - [ ] ⏳ Achat tranche 1 (Pi Zero 2 WH, alim, microSD, micro INMP441, ampli MAX98357A + haut-parleur, plaque + fils)
