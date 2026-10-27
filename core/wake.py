@@ -25,8 +25,18 @@ class OpenWakeWordDetector:
             self.model = Model(wakeword_models=names)
         self.threshold = float(cfg.get("threshold", 0.5))
         self.need = int(cfg.get("consecutive_frames", 2))
+        self.minimum_rms = float(cfg.get("minimum_rms", 0.0))
+        self._validate_settings()
         self.hits = 0
         self.last_score = 0.0
+
+    def _validate_settings(self):
+        if not 0 <= self.threshold <= 1:
+            raise ValueError("Le seuil du mot d'activation doit être compris entre 0 et 1.")
+        if self.need < 1:
+            raise ValueError("Le nombre de trames consécutives doit être supérieur à zéro.")
+        if self.minimum_rms < 0:
+            raise ValueError("Le niveau sonore minimal ne peut pas être négatif.")
 
     def reset(self):
         self.hits = 0
@@ -37,7 +47,12 @@ class OpenWakeWordDetector:
         pcm = (np.clip(block, -1, 1) * 32767).astype(np.int16)
         scores = self.model.predict(pcm)
         self.last_score = float(max(scores.values())) if scores else 0.0
-        self.hits = self.hits + 1 if self.last_score >= self.threshold else 0
+        rms = float(np.sqrt(np.mean(np.square(block, dtype=np.float64))))
+        self.hits = (
+            self.hits + 1
+            if self.last_score >= self.threshold and rms >= self.minimum_rms
+            else 0
+        )
         if self.hits >= self.need:
             self.reset()
             return True

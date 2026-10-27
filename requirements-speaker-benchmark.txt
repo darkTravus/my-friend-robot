@@ -1,0 +1,3 @@
+# Dépendances facultatives du banc d'essai local d'identification vocale
+onnxruntime>=1.16
+kaldi-native-fbank>=1.22

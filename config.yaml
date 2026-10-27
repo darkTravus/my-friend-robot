@@ -7,6 +7,10 @@ api:
   stt_prompt: "Conversation familière en français avec un robot de compagnie : discussion, animés, mangas, musique, actualités, suggestions."
 language: "fr"
 
+robot:
+  name: "Zéphyr"
+  description: "petit robot de compagnie"
+
 llm:
   max_history_messages: 16   # mémoire de la conversation (en messages)
   temperature: 0.6
@@ -14,8 +18,7 @@ llm:
   debug_timing: true         # affiche la durée de chaque appel au LLM (utile pour repérer les lenteurs)
   reasoning_effort: "low"    # low = réponses plus rapides (latence) ; null pour les modèles non-raisonnement
   system_prompt: |
-    Tu es un petit robot de compagnie qui discute à voix haute avec son propriétaire.
-    Tu t'appelles Zéphyr.
+    Tu es un robot de compagnie qui discute à voix haute avec la personne présente.
     Parle comme à l'oral, de façon naturelle et chaleureuse, en français, et tutoie toujours la personne.
     Fais varier légèrement le rythme et les formulations. Une hésitation discrète (« euh », « alors ») ou une reformulation est bienvenue quand elle exprime vraiment une réflexion ou une incertitude, mais n'en ajoute pas systématiquement.
     Préfère des phrases fluides et des enchaînements naturels ; utilise les points de suspension avec parcimonie. N'écris pas de didascalies ni de sons comme des soupirs, respirations ou toux.
@@ -33,7 +36,8 @@ llm:
     Les transcriptions vocales déforment parfois les noms propres (« Aouachi » pour « Ao Ashi ») : rapproche-les phonétiquement de ce qui a été dit plus tôt avant de conclure qu'un titre n'existe pas.
     Compare toujours les résultats avec la date du jour : s'ils concernent une autre saison ou une autre année que celle demandée, dis-le au lieu de les présenter comme valables.
     Saisons d'animés : hiver = janvier à mars, printemps = avril à juin, été = juillet à septembre, automne = octobre à décembre.
-    Pour une liste, ne donne jamais plus de 3 éléments.
+    Pour les suggestions, ne donne jamais plus de 3 éléments. Quand tu consultes une liste enregistrée, restitue tous ses éléments sans en ajouter ni en omettre.
+    Pour gérer les listes, utilise l'outil manage_list : il permet d'ajouter, consulter, supprimer un élément, afficher les noms des listes et exporter en Markdown ou en texte.
     N'énonce un titre, un nom ou une date que s'ils figurent dans les résultats des outils ; sinon dis que tu n'as pas l'information.
     Tu n'as pas encore de mémoire d'une conversation à l'autre ni de surveillance en arrière-plan : ne propose jamais de retenir, de surveiller ou de prévenir plus tard. Ne propose que ce que tes outils permettent.
     Si un nom de lieu te paraît étrange (transcription douteuse), demande confirmation avant de chercher la météo.
@@ -93,11 +97,23 @@ fillers:
 tools:
   timeout_seconds: 12   # un outil plus lent que ça est abandonné (le robot répond sans lui)
 
+lists:
+  data_dir: "data"      # listes et exports locaux (exclu du contrôle Git)
+
+speaker_identification:
+  enabled: true        # expérimental ; activer après enrôlement et installation des dépendances facultatives
+  model_path: "data/models/voxceleb_ECAPA512.onnx"
+  profiles_path: "data/speaker_profiles.json"
+  threshold: 0.30       # seuil provisoire, issu d'un petit benchmark
+  ambiguity_margin: 0.05
+  minimum_duration_seconds: 3.0
+
 wake:
   mode: "openwakeword"        # "openwakeword" (local, gratuit) | "manual" (Entrée / Espace seulement)
   models: ["model/hey_zephyr.onnx"]
-  threshold: 0.5              # plus bas = plus sensible (mais plus de faux réveils) ; test : python main.py --wake-test
-  consecutive_frames: 2       # nombre de détections de suite exigées (anti faux positifs)
+  threshold: 0.75             # seuil renforcé pour réduire les réveils intempestifs ; à ajuster après test
+  consecutive_frames: 3       # nombre de détections successives exigées (anti faux positifs)
+  minimum_rms: 0.008          # ignore les scores sur quasi-silence ; à ajuster selon le micro
 
 conversation:
   wake_reply: "voice"         # après le mot d'activation : "voice" = le robot répond ("Oui ?"), "beep" = petit bip, "none"

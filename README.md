@@ -39,7 +39,17 @@ Puis : dis le mot d'activation, ou appuie sur **Espace** dans la fenêtre / **En
   Chaque lancement crée un nouveau dossier daté ; écoute les cinq fichiers dans l'ordre pour évaluer le naturel,
   l'intonation et les éventuelles coupures. Compare les voix avec `--tts-test-voice homme` ou un autre profil,
   et change le dossier racine avec `--tts-test-dir chemin`.
-- `python -m unittest discover -s tests -v` : vérifie le découpage et le regroupement des phrases sans accès réseau.
+- `python -m unittest discover -s tests -v` : lance les tests unitaires du projet, y compris ceux des listes et du banc d'essai.
+- Les listes vocales (ajout, consultation, suppression, export Markdown/TXT) sont stockées localement dans `data/`. Exemples : « ajoute du lait à ma liste courses », « montre ma liste courses », « retire le lait de ma liste courses » ou « exporte ma liste courses en texte ».
+- L'identité du robot est définie par `robot.name` et `robot.description` dans `config.yaml`. Le robot est **Zéphyr**, un petit robot de compagnie ; son identité est injectée dans le prompt système.
+- Le mot de réveil openWakeWord utilise un seuil renforcé, plusieurs trames successives et un filtre de niveau sonore minimal pour limiter les faux réveils. Ajuste `wake.threshold`, `wake.consecutive_frames` et `wake.minimum_rms` dans `config.yaml` selon le micro ; `python main.py --wake-test` permet de vérifier le score du mot prononcé. La voix et le genre grammatical configurés pour Zéphyr restent fixes quand le locuteur change. Si Edge TTS est indisponible, le journal indique le repli Piper, qui a un timbre différent.
+- L'identification vocale expérimentale est désactivée par défaut pour préserver le démarrage sans dépendances ONNX et tenir compte du matériel cible. Installe ses dépendances facultatives avec `pip install -r requirements-speaker-benchmark.txt`, puis lance `python main.py --enroll-speaker` pour enregistrer cinq phrases et le nom d'usage / les centres d'intérêt. Au moins deux profils sont nécessaires pour tenter une identification. Les empreintes vocales sont conservées localement dans `data/speaker_profiles.json` ; les enregistrements bruts ne sont pas sauvegardés. Active ensuite `speaker_identification.enabled` dans `config.yaml`. Le seuil initial est provisoirement `0.30` ; une phrase de moins de 3 secondes ou un score ambigu est traité comme « inconnu », sans accès aux informations du profil. Le profil est vérifié à chaque prise de parole : le robot garde le contexte uniquement pour les tours successifs reconnus comme le même profil. Un changement de profil, un tour non authentifié ou un nouveau réveil efface l'historique avant l'appel STT/LLM, afin de ne pas transmettre au fournisseur ni révéler les données de l'interlocuteur précédent. Lorsqu'un profil est reconnu, son nom et ses centres d'intérêt sont ajoutés au contexte envoyé au fournisseur du LLM. Cette étape ne crée pas encore de mémoire personnelle persistante. Supprime un profil avec `python main.py --delete-speaker <identifiant>`.
+- Le banc d'essai d'identification vocale est séparé du robot. Installe `requirements-speaker-benchmark.txt`, télécharge le modèle WeSpeaker ECAPA512 ONNX dans `data/models/voxceleb_ECAPA512.onnx`, puis lance :
+
+      python scripts/benchmark_speakers.py --model data/models/voxceleb_ECAPA512.onnx --samples data/speaker-benchmark
+
+  Pour chaque personne, sépare les fichiers ainsi : `data/speaker-benchmark/<personne>/enrollment/*.wav` et `data/speaker-benchmark/<personne>/test/*.wav`. Mets au moins deux WAV d'enrôlement et un WAV de test par personne, et au moins deux personnes. Les WAV doivent être mono PCM 16 bits à 16 kHz. Les enregistrements de test doivent être distincts de ceux utilisés pour créer le profil ; varie les phrases et conditions d'enregistrement. Le script calcule les profils et scores localement sans sauvegarder les empreintes.
+  Le rapport mesure le taux de faux rejets (FRR) et le taux de fausses acceptations (FAR) par comparaison profil-test ; il compte aussi les bonnes et fausses identifications par extrait ainsi que les rejets selon plusieurs seuils. Ce balayage reste exploratoire : il ne valide pas un seuil sur des données indépendantes, et les FAR/FRR par comparaison ne sont pas des taux par personne. Les extraits de moins de 3 secondes sont signalés. Le modèle est un candidat expérimental entraîné sur VoxCeleb en anglais : il ne doit pas servir à attribuer des souvenirs tant que des tests français représentatifs n'ont pas confirmé les résultats. Le script affiche aussi les temps d'inférence sur le PC ; ces mesures ne préjugent pas des performances sur le Pi. Voir le [tableau officiel WeSpeaker](https://github.com/wenet-e2e/wespeaker/blob/master/docs/pretrained.md) et vérifier la licence du modèle avant toute redistribution.
 
 ## Structure
 
@@ -49,7 +59,7 @@ Puis : dis le mot d'activation, ou appuie sur **Espace** dans la fenêtre / **En
     core/stt.py      voix -> texte
     core/llm.py      conversation et mémoire
     core/tts.py      texte -> voix (Edge TTS ou Piper)
-    modules/         (vide) futurs outils : météo, actus, Spotify...
+    modules/         outils du robot : météo, actus, recherche web, listes...
 
 ## Changer de fournisseur
 

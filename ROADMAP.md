@@ -36,8 +36,9 @@ Légende : ✅ fait · 🟡 en cours / à valider · ⏳ bloqué (matériel non 
 - [x] ✅ Tests de référence reproductibles en ligne de commande avec export WAV
 - [ ] 🟡 Écouter les exemples sur les voix utilisées et ajuster le rythme / la taille des segments
 - [ ] ⬜ Étudier plus tard l'ajout contrôlé de respirations, soupirs et autres effets sonores
+- [ ] 💤 Remplacer à terme le moteur vocal par un TTS Gemini ou GPT-4o
 
-## Phase 2 : Matériel Raspberry Pi ⏳
+## Phase 2 : Matériel Raspberry Pi 💤 (reportée)
 - [ ] ⏳ Achat tranche 1 (Pi Zero 2 WH, alim, microSD, micro INMP441, ampli MAX98357A + haut-parleur, plaque + fils)
 - [ ] ⏳ Raspberry Pi OS, SSH, Wi-Fi, installation du projet
 - [ ] ⏳ Câblage micro I2S et ampli, test audio
@@ -53,7 +54,8 @@ Légende : ✅ fait · 🟡 en cours / à valider · ⏳ bloqué (matériel non 
 
 ## Phase 4 : Outils du LLM
 - [x] ✅ Météo, actualités, recherche web, lecture de page
-- [ ] 💤 Listes (courses, animés) avec export .md / .txt
+- [x] ✅ Listes nommées (ajout, consultation, suppression, export .md / .txt, stockage local)
+- [x] ✅ Identité explicite du robot (nom et description configurés)
 - [ ] 💤 Mémoire entre conversations (notes)
 - [ ] 💤 Surveillance d'un sujet + prévenir plus tard
 
@@ -61,8 +63,12 @@ Légende : ✅ fait · 🟡 en cours / à valider · ⏳ bloqué (matériel non 
 - [ ] ⬜ Réglages : voix, mot d'activation, ville, volume
 - [ ] ⬜ Accès aux listes et notes (quand elles existeront)
 
-## Phase 6 : Identification du locuteur ⬜
-- [ ] ⬜ Enregistrer des personnes via l'interface
+## Phase 6 : Identification du locuteur 🟡 (évaluation préliminaire)
+- [x] ✅ Évaluer un modèle local WeSpeaker ONNX sur le jeu exploratoire de voix françaises
+- [x] ✅ Première intégration expérimentale locale : profils nom/intérêts, enrôlement CLI, seuil provisoire et rejet des voix inconnues/ambiguës
+- [x] ✅ Isolation du contexte entre personnes ; historique effacé si le locuteur change, n'est pas authentifié ou qu'une nouvelle conversation démarre
+- [ ] ⬜ Évaluer l'intégration sur des conversations réelles, avec phrases courtes, bruit et plusieurs locuteurs
+- [ ] ⬜ Enregistrer et gérer des personnes via l'interface
 - [ ] ⬜ Tests de fiabilité (phrases courtes, bruit)
 - [ ] ⬜ **Profils et souvenirs personnels** (idée du propriétaire) : retenir ce qu'une personne confie, par personne
   - Règles : jamais évoquer un souvenir personnel si la personne n'est pas identifiée avec confiance, ou si plusieurs voix / visages sont présents
@@ -81,5 +87,6 @@ Légende : ✅ fait · 🟡 en cours / à valider · ⏳ bloqué (matériel non 
 - [ ] ⬜ Boîtier (carton / bois, puis impression 3D)
 
 ## Transversal
+- [ ] ⬜ Tenir compte des limites du matériel cible (CPU, RAM, latence, réseau) dans les choix logiciels, même avant l'achat du Pi
 - [ ] ⬜ Confidentialité : bouton de coupure micro / caméra, empreintes vocales en local
 - [ ] ⬜ Sauvegarde et robustesse (logs, redémarrage, carte SD)
